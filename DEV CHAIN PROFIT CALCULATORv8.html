@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMVU Derivation Chain Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .calculator {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="number"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        .highlight-input {
+            background-color: #fff3cd;
+            border-color: #ffc107 !important;
+        }
+        .field-explanation {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+            line-height: 1.3;
+        }
+        .calculated-field {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .result {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-top: 10px;
+        }
+        .threshold-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .comparison {
+            background-color: #f0f8ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .comparison h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .comparison-row:last-child {
+            border-bottom: none;
+        }
+        .comparison-label {
+            font-weight: bold;
+        }
+        .good {
+            color: #4CAF50;
+        }
+        .bad {
+            color: #f44336;
+        }
+        .neutral {
+            color: #FF9800;
+        }
+        .breakdown {
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>IMVU Derivation Chain Calculator</h1>
+        <div style="text-align: center; font-size: 12px; color: #888; margin-top: -20px; margin-bottom: 30px;">
+            made by FlexFactor @ IMVU
+        </div>
+        
+        <div class="input-group">
+            <label for="basePrice">Base Price:</label>
+            <input type="number" id="basePrice" step="1" placeholder="Enter base price" value="304">
+            <div class="field-explanation">Base price is the FIRST item in the dev chain! (Empty IMVU clothing, furniture, etc.)</div>
+        </div>
+        
+        <div class="input-group">
+            <label for="derivationFee">Derivation Fee:</label>
+            <input type="number" id="derivationFee" step="1" placeholder="Enter derivation fee" value="0">
+            <div class="field-explanation">What you pay to derive from the item</div>
+        </div>
+        
+        <div class="input-group">
+            <label for="creatorProfit">Your Profit:</label>
+            <input type="number" id="creatorProfit" step="1" placeholder="Enter your profit" class="highlight-input">
+            <div class="field-explanation">The profit YOU add on top (your markup)</div>
+        </div>
+        
+        <div class="calculated-field">
+            <strong>Auxiliary Profit:</strong> <span id="auxProfit">$0.00</span>
+            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                Derivation Fee - Base Price = profit for previous creators in the chain
+            </div>
+        </div>
+        
+        <div class="calculated-field">
+            <strong>Total Profit:</strong> <span id="totalProfit">$0.00</span>
+            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                Auxiliary Profit + Your Profit = total profit above base price
+            </div>
+        </div>
+        
+        <div class="result">
+            <div>Your Cash Conversion:</div>
+            <div class="result-value" id="resultValue">$0.0000</div>
+            <div class="threshold-info" id="thresholdInfo"></div>
+        </div>
+        
+        <div class="calculated-field">
+            <strong>Payout Credits Earned:</strong> <span id="payoutCredits">0.0000</span>
+            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                Credits before cash conversion (multiply by 0.001 to get dollars)
+            </div>
+        </div>
+        
+        <div class="breakdown" id="breakdown"></div>
+        
+        <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 15px 0; font-size: 14px;">
+            <strong>Rate Explanation:</strong><br>
+            • <strong>Old Rate:</strong> 0.4 payout credits per profit unit (better rate)<br>
+            • <strong>New Rate:</strong> 0.2 payout credits per profit unit (worse rate)<br>
+            • <strong>Cash Conversion:</strong> Payout credits × 0.001 = dollars
+        </div>
+        
+        <div class="comparison">
+            <h3>Comparison with Old Structure</h3>
+            <div class="comparison-row">
+                <span class="comparison-label">Old Structure (0.4 × 0.001 × Your Profit):</span>
+                <span id="oldStructure">$0.0000</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comparison-label">New Structure:</span>
+                <span id="newStructure">$0.0000</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comparison-label">Difference:</span>
+                <span id="difference">$0.0000</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comparison-label">Percentage of Original:</span>
+                <span id="percentageOriginal">100.00%</span>
+            </div>
+            <div class="comparison-row">
+                <span class="comparison-label">Change:</span>
+                <span id="changePercent">0.00%</span>
+            </div>
+            <div id="explanation" style="margin-top: 15px; font-size: 14px; line-height: 1.4;"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculateResult() {
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const derivationFee = parseFloat(document.getElementById('derivationFee').value) || 0;
+            const creatorProfit = parseFloat(document.getElementById('creatorProfit').value) || 0;
+            
+            // Calculate auxiliary profit
+            const auxProfit = Math.max(0, derivationFee - basePrice);
+            const totalProfit = auxProfit + creatorProfit;
+            
+            // Update calculated fields
+            document.getElementById('auxProfit').textContent = auxProfit.toFixed(0);
+            document.getElementById('totalProfit').textContent = totalProfit.toFixed(0);
+            
+            if (basePrice <= 0 || creatorProfit <= 0) {
+                // Reset all displays
+                document.getElementById('resultValue').textContent = '$0.0000';
+                document.getElementById('payoutCredits').textContent = '0';
+                document.getElementById('thresholdInfo').textContent = '';
+                document.getElementById('oldStructure').textContent = '$0.0000';
+                document.getElementById('newStructure').textContent = '$0.0000';
+                document.getElementById('difference').textContent = '$0.0000';
+                document.getElementById('percentageOriginal').textContent = '100.00%';
+                document.getElementById('changePercent').textContent = '0.00%';
+                document.getElementById('explanation').textContent = '';
+                document.getElementById('breakdown').textContent = '';
+                return;
+            }
+            
+            // Calculate threshold based on base price
+            const fullThreshold = (2.2 * basePrice) / 1.8;
+            
+            // Auxiliary profit gets priority in the threshold
+            const auxThresholdUsed = Math.min(auxProfit, fullThreshold);
+            const remainingThreshold = Math.max(0, fullThreshold - auxThresholdUsed);
+            
+            // Your profit uses remaining threshold
+            const yourThresholdUsed = Math.min(creatorProfit, remainingThreshold);
+            const yourExcess = Math.max(0, creatorProfit - remainingThreshold);
+            
+            // Calculate your earnings based on the three cases
+            const yourOldRateCredits = yourThresholdUsed * 0.4;
+            let yourNewRateCredits = 0;
+            
+            if (yourExcess > 0) {
+                if (auxProfit < fullThreshold) {
+                    // Case 2: Crossing the threshold
+                    const breakpointFinalPrice = 1.1 * (fullThreshold + basePrice);
+                    const yourFinalPrice = 1.1 * (auxProfit + creatorProfit + basePrice);
+                    const priceDifference = yourFinalPrice - breakpointFinalPrice;
+                    yourNewRateCredits = priceDifference * 0.2;
+                } else {
+                    // Case 3: Well beyond threshold
+                    const newFinalPrice = 1.1 * (derivationFee + creatorProfit + basePrice);
+                    const oldFinalPrice = 1.1 * (derivationFee + basePrice);
+                    const yourPriceDifference = newFinalPrice - oldFinalPrice;
+                    yourNewRateCredits = yourPriceDifference * 0.2;
+                }
+            }
+            // Case 1: Below threshold entirely - handled by yourOldRateCredits only
+            
+            const yourTotalCredits = yourOldRateCredits + yourNewRateCredits;
+            const yourTotalEarnings = yourTotalCredits * 0.001;
+            
+            // Calculate old structure for comparison
+            const oldCredits = creatorProfit * 0.4;
+            const oldResult = oldCredits * 0.001;
+            
+            // Calculate comparison metrics
+            const difference = yourTotalEarnings - oldResult;
+            const percentageOfOriginal = (yourTotalEarnings / oldResult) * 100;
+            const changePercent = ((yourTotalEarnings - oldResult) / oldResult) * 100;
+            
+            // Update display
+            document.getElementById('resultValue').textContent = `${yourTotalEarnings.toFixed(4)}`;
+            document.getElementById('payoutCredits').textContent = yourTotalCredits.toFixed(4);
+            document.getElementById('oldStructure').textContent = `${oldResult.toFixed(4)}`;
+            document.getElementById('newStructure').textContent = `${yourTotalEarnings.toFixed(4)}`;
+            document.getElementById('difference').textContent = `${difference.toFixed(4)}`;
+            document.getElementById('percentageOriginal').textContent = `${percentageOfOriginal.toFixed(2)}%`;
+            
+            // Style the change percentage
+            const changeElement = document.getElementById('changePercent');
+            if (changePercent > 0) {
+                changeElement.textContent = `+${changePercent.toFixed(2)}%`;
+                changeElement.className = 'good';
+            } else if (changePercent < 0) {
+                changeElement.textContent = `${changePercent.toFixed(2)}%`;
+                changeElement.className = 'bad';
+            } else {
+                changeElement.textContent = '0.00%';
+                changeElement.className = 'neutral';
+            }
+            
+            // Generate breakdown
+            let breakdown = `<strong>Threshold Breakdown:</strong><br>`;
+            breakdown += `• Full threshold: ${fullThreshold.toFixed(0)}<br>`;
+            breakdown += `• Auxiliary profit uses: ${auxThresholdUsed.toFixed(0)} of threshold<br>`;
+            breakdown += `• Your remaining threshold: ${remainingThreshold.toFixed(0)}<br>`;
+            breakdown += `• Your profit at old rate (0.4): ${yourThresholdUsed.toFixed(0)} → ${yourOldRateCredits.toFixed(0)} credits<br>`;
+            if (yourExcess > 0) {
+                if (auxProfit < fullThreshold) {
+                    // Case 2: Crossing the threshold
+                    const breakpointFinalPrice = 1.1 * (fullThreshold + basePrice);
+                    const yourFinalPrice = 1.1 * (auxProfit + creatorProfit + basePrice);
+                    const priceDifference = yourFinalPrice - breakpointFinalPrice;
+                    breakdown += `• Case 2 - Crossing threshold: ${priceDifference.toFixed(0)} × 0.2 → ${yourNewRateCredits.toFixed(0)} credits`;
+                } else {
+                    // Case 3: Well beyond threshold  
+                    const newFinalPrice = 1.1 * (derivationFee + creatorProfit + basePrice);
+                    const oldFinalPrice = 1.1 * (derivationFee + basePrice);
+                    const yourPriceDifference = newFinalPrice - oldFinalPrice;
+                    breakdown += `• Case 3 - Beyond threshold: ${yourPriceDifference.toFixed(0)} × 0.2 → ${yourNewRateCredits.toFixed(0)} credits`;
+                }
+            } else {
+                if (totalProfit < fullThreshold) {
+                    breakdown += `• Case 1 - Below threshold: all profit gets old rate`;
+                } else {
+                    breakdown += `• No excess - all your profit fits in remaining threshold`;
+                }
+            }
+            
+            document.getElementById('breakdown').innerHTML = breakdown;
+            
+            // Generate explanation based on cases
+            let explanation = '';
+            if (yourExcess <= 0) {
+                if (totalProfit < fullThreshold) {
+                    explanation = `<strong>Case 1 - Below threshold:</strong> Total profit (${totalProfit.toFixed(0)}) is below the threshold (${fullThreshold.toFixed(0)}), so you get the full old rate on all your profit. No penalty applied.`;
+                } else {
+                    explanation = `<strong>No penalty:</strong> Your profit (${creatorProfit}) fits within your remaining threshold (${remainingThreshold.toFixed(0)}), so you get the full old rate. The auxiliary profit (${auxProfit.toFixed(0)}) used ${auxThresholdUsed.toFixed(0)} of the total threshold.`;
+                }
+            } else {
+                if (auxProfit < fullThreshold) {
+                    // Case 2: Crossing threshold
+                    explanation = `<span class="bad"><strong>Case 2 - Crossing threshold:</strong></span> Your profit exceeds your remaining threshold by ${yourExcess.toFixed(0)}. The auxiliary profit (${auxProfit.toFixed(0)}) already used ${auxThresholdUsed.toFixed(0)} of the ${fullThreshold.toFixed(0)} threshold, leaving you only ${remainingThreshold.toFixed(0)}. Your excess gets calculated using breakpoint final price method. You lose ${Math.abs(changePercent).toFixed(2)}% compared to the old structure. <strong>Bad:</strong> Previous creators eat your threshold space. <strong>Good:</strong> You still get old rate on ${remainingThreshold.toFixed(0)} of your profit.`;
+                } else {
+                    // Case 3: Well beyond threshold
+                    explanation = `<span class="bad"><strong>Case 3 - Beyond threshold:</strong></span> The auxiliary profit (${auxProfit.toFixed(0)}) completely exceeds the threshold (${fullThreshold.toFixed(0)}), so you get no old rate at all. Your entire profit gets calculated using the new price difference method. You lose ${Math.abs(changePercent).toFixed(2)}% compared to the old structure. <strong>Bad:</strong> No old rate benefits. <strong>Good:</strong> At least you're making something?`;
+                }
+            }
+            
+            document.getElementById('explanation').innerHTML = explanation;
+            
+            let infoText = `Threshold: ${fullThreshold.toFixed(0)} | Aux uses: ${auxThresholdUsed.toFixed(0)} | Your remaining: ${remainingThreshold.toFixed(0)}`;
+            document.getElementById('thresholdInfo').textContent = infoText;
+        }
+        
+        // Add event listeners for real-time calculation
+        document.getElementById('basePrice').addEventListener('input', calculateResult);
+        document.getElementById('derivationFee').addEventListener('input', calculateResult);
+        document.getElementById('creatorProfit').addEventListener('input', calculateResult);
+        
+        // Initial calculation
+        calculateResult();
+    </script>
+</body>
+</html>
