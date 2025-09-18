@@ -177,8 +177,8 @@
         
         <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 15px 0; font-size: 14px;">
             <strong>Rate Explanation:</strong><br>
-            • <strong>Old Rate:</strong> 0.4 payout credits per profit unit (better rate)<br>
-            • <strong>New Rate:</strong> 0.2 payout credits per profit unit (worse rate)<br>
+            • <strong>Old Rate:</strong> 0.4 × profit amount (direct conversion)<br>
+            • <strong>New Rate:</strong> 0.2 × final price difference (after 1.1× markup)<br>
             • <strong>Cash Conversion:</strong> Payout credits × 0.001 = dollars
         </div>
         
@@ -304,7 +304,7 @@
             
             // Generate breakdown
             let breakdown = `<strong>Threshold Breakdown:</strong><br>`;
-            breakdown += `• Full threshold: ${fullThreshold.toFixed(0)}<br>`;
+            breakdown += `• Full threshold: ${fullThreshold.toFixed(0)} (breakpoint where old rate becomes worse than new rate)<br>`;
             breakdown += `• Auxiliary profit uses: ${auxThresholdUsed.toFixed(0)} of threshold<br>`;
             breakdown += `• Your remaining threshold: ${remainingThreshold.toFixed(0)}<br>`;
             breakdown += `• Your profit at old rate (0.4): ${yourThresholdUsed.toFixed(0)} → ${yourOldRateCredits.toFixed(0)} credits<br>`;
@@ -314,13 +314,15 @@
                     const breakpointFinalPrice = 1.1 * (fullThreshold + basePrice);
                     const yourFinalPrice = 1.1 * (auxProfit + creatorProfit + basePrice);
                     const priceDifference = yourFinalPrice - breakpointFinalPrice;
-                    breakdown += `• Case 2 - Crossing threshold: ${priceDifference.toFixed(0)} × 0.2 → ${yourNewRateCredits.toFixed(0)} credits`;
+                    breakdown += `• Case 2 - Crossing threshold: ${priceDifference.toFixed(0)} × 0.2 → ${yourNewRateCredits.toFixed(0)} credits<br>`;
+                    breakdown += `&nbsp;&nbsp;(Your final price - Breakpoint final price ${breakpointFinalPrice.toFixed(0)}) × 0.2`;
                 } else {
                     // Case 3: Well beyond threshold  
                     const newFinalPrice = 1.1 * (derivationFee + creatorProfit + basePrice);
                     const oldFinalPrice = 1.1 * (derivationFee + basePrice);
                     const yourPriceDifference = newFinalPrice - oldFinalPrice;
-                    breakdown += `• Case 3 - Beyond threshold: ${yourPriceDifference.toFixed(0)} × 0.2 → ${yourNewRateCredits.toFixed(0)} credits`;
+                    breakdown += `• Case 3 - Beyond threshold: ${yourPriceDifference.toFixed(0)} × 0.2 → ${yourNewRateCredits.toFixed(0)} credits<br>`;
+                    breakdown += `&nbsp;&nbsp;(Your contribution to final price) × 0.2`;
                 }
             } else {
                 if (totalProfit < fullThreshold) {
